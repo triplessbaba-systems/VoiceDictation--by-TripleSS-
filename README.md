@@ -6,6 +6,14 @@ Sesleriniz hiçbir sunucuya veya buluta gitmez, tamamen bilgisayarınızda yerel
 
 ---
 
+## Doğrudan İndir (Hazır Sürüm)
+
+Herhangi bir kurulum veya ek çalışma zamanı gerektirmeyen tek dosya sürümünü indirin:
+- **[VoiceDictation.exe İndir (v1.0.0)](https://github.com/triplessbaba-systems/VoiceDictation--by-TripleSS-/releases/download/v1.0.0/VoiceDictation.exe)**
+- **[VoiceDictation-v1.0.0-windows-x64.zip İndir](https://github.com/triplessbaba-systems/VoiceDictation--by-TripleSS-/releases/download/v1.0.0/VoiceDictation-v1.0.0-windows-x64.zip)**
+
+---
+
 ## Öne Çıkan Özellikler
 
 - **%100 Yerel ve Güvenli:** Ses kaydı ve çözümleme tamamen bilgisayarınızda gerçekleşir, internet gerektirmez.
