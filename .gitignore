@@ -1,0 +1,13 @@
+[Bb]in/
+[Oo]bj/
+publish/
+publish-standalone/
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.log
+.DS_Store
+Thumbs.db
