@@ -1,79 +1,81 @@
-# VoiceDictation
+# VoiceDictation (by TripleSS)
 
-VoiceDictation is a high-performance, system-wide local speech-to-text dictation utility built with .NET 10 (C#) and WPF. It captures microphone audio when a global hotkey is pressed, runs local transcription via embedded Whisper.net (GGML) models completely offline on CPU/GPU, and injects transcribed text directly into the active cursor position across any Windows application (Discord, Notepad, Visual Studio, Word, Chrome, etc.).
+**VoiceDictation**, Windows işletim sisteminde çalışan; herhangi bir metin alanında (Discord, Not Defteri, Visual Studio / VS Code, Word, WhatsApp, tarayıcılar vb.) global kısayola basılarak konuşulan sesleri **tamamen yerel ve çevrimdışı (offline)** olarak metne döküp imlecin bulunduğu konuma anında yazan yüksek performanslı bir sesli dikte aracıdır.
 
----
-
-## Key Features
-
-- **100% Offline & Private:** Powered by local Whisper GGML models. Zero audio or transcript data ever leaves your computer.
-- **System-Wide Global Injection:** Works universally in any application using low-level Win32 `SendInput` (Unicode Direct Mode) or Clipboard swap injection.
-- **Non-Activating Floating Capsule UI:** Minimal Antigravity Dark HUD (`#0d1117`, `#161b22`, `#58a6ff`) with real-time audio amplitude waveforms that never steals keyboard focus from your active target window.
-- **Windows System Tray Integration:** Sits quietly in the notification area (Gizli Simgeler) with quick access to Settings, Capsule toggle, and Exit.
-- **Single-File Self-Contained Distribution:** Embedded unmanaged C++ Whisper runtime libraries (`whisper.dll`, `ggml-cpu-whisper.dll`, etc.) automatically deployed on startup. No prerequisites, runtimes, or external installers required.
-- **Customizable Controls:**
-  - Configurable hotkey (Default: `Insert` or `F8`)
-  - Push-to-Talk or Toggle mode
-  - Language selection (Turkish, English, Multilingual Auto-Detect)
-  - Microphone device and Whisper model selection (`base`, `small`, etc.)
+.NET 10 (C#), WPF mimarisi ve gömülü Whisper C++ çıkarım kütüphaneleriyle sıfırdan geliştirilmiştir.
 
 ---
 
-## Architecture Overview
+## Öne Çıkan Özellikler
+
+- **%100 Yerel ve Gizli:** Sesleriniz ve transkriptleriniz hiçbir harici sunucuya veya buluta gönderilmez. Tamamen bilgisayarınızdaki Whisper GGML modeliyle yerel olarak işlenir.
+- **Sistem Genelinde Kusursuz Enjeksiyon:** Düşük seviyeli Win32 `SendInput` (Doğrudan Unicode Karakter Modu) veya Hibrit Pano-Takas yöntemleriyle imlecin aktif olduğu her yere metin yazar.
+- **Odak Çalmayan Yüzen Kapsül HUD (`WS_EX_NOACTIVATE`):** Ekranın altında konumlanan, mikrofon ses dalgalarını gerçek zamanlı gösteren ve siz konuşurken hedef pencerenin (örneğin oyun veya kod editörü) klavye odağını asla bozmayan modern Antigravity Dark arayüzü.
+- **Sistem Tepsisi / Gizli Simgeler (System Tray) Entegrasyonu:** Görev çubuğunun sağ altındaki gizli simgeler alanında sessizce çalışır. Çift tıklamayla ayarlar açılır, sağ tıkla kapsül gösterilir veya kapatılır.
+- **Tek Dosya (Standalone Single-File) Dağıtımı:** Gömülü yönetilmeyen C++ kütüphaneleri (`whisper.dll`, `ggml-cpu-whisper.dll` vb.) ilk açılışta otomatik olarak ayıklanır. Karşı tarafta .NET Runtime, Visual C++ Redistributable veya ek hiçbir paket kurulu olması gerekmez; tek bir `.exe` doğrudan çalışır.
+- **Gelişmiş Yapılandırma:**
+  - Özelleştirilebilir Kısayol Tuşu (Varsayılan: `Insert` veya `F8`, `CapsLock`, `F7` vb.)
+  - Tetikleme Modu (Bas-Konuş veya Aç/Kapa)
+  - Transkripsiyon Dili (Türkçe, İngilizce, Çok Dilli Otomatik Algılama)
+  - Mikrofon aygıtı ve Whisper model seçimi (`base`, `small` vb.)
+
+---
+
+## Mimari ve Katman Yapısı
 
 ```
 VoiceDictation/
 ├── src/
-│   ├── VoiceDictation.Core/              # Domain Models, Finite State Machine, Abstractions
+│   ├── VoiceDictation.Core/              # Domain Modelleri, Durum Makinesi (FSM) ve Sözleşmeler
 │   │   ├── Models/                      # DictationState, AudioChunk, TranscriptionResult, AppSettings
 │   │   ├── State/                       # DictationStateMachine (Idle -> Listening -> Transcribing -> Injecting)
-│   │   └── Interfaces/                  # Contracts for Audio, Transcription, Input, Hooks
-│   ├── VoiceDictation.Infrastructure/    # Concrete Hardware & OS Implementations
-│   │   ├── Audio/                       # WasapiAudioCaptureService (16kHz mono PCM resampling)
-│   │   ├── Transcription/               # WhisperTranscriptionEngine (Whisper.net GGML runner)
+│   │   └── Interfaces/                  # Ses, Transkripsiyon, Klavye Kancası ve Enjeksiyon Arayüzleri
+│   ├── VoiceDictation.Infrastructure/    # Donanım, Windows API ve Motor Uygulamaları
+│   │   ├── Audio/                       # WasapiAudioCaptureService (16kHz mono PCM yeniden örnekleme)
+│   │   ├── Transcription/               # WhisperTranscriptionEngine (Whisper.net GGML entegrasyonu)
 │   │   ├── Input/                       # LowLevelKeyboardHookService (WH_KEYBOARD_LL), WindowsInputInjectionService
-│   │   ├── Native/                      # Win32 P/Invoke declarations, NativeLibraryBootstrapper
+│   │   ├── Native/                      # Win32 P/Invoke tanımları, NativeLibraryBootstrapper
 │   │   └── Configuration/               # JsonSettingsService (%APPDATA%\VoiceDictation\settings.json)
-│   └── VoiceDictation.App/               # Presentation Layer (WPF / MVVM)
+│   └── VoiceDictation.App/               # Sunum Katmanı (WPF / MVVM)
 │       ├── ViewModels/                  # CapsuleViewModel, SettingsViewModel, RelayCommand
 │       ├── Views/                       # CapsuleWindow, SettingsWindow
-│       ├── Services/                    # TrayIconManager (NotifyIcon integration)
-│       └── Styles/                      # Antigravity Dark tokens, vector geometries
+│       ├── Services/                    # TrayIconManager (NotifyIcon sistem tepsisi yöneticisi)
+│       └── Styles/                      # Antigravity Dark renk paleti, buton ve ikon vektörleri
 └── tests/
-    └── VoiceDictation.Tests/            # xUnit Test Suite (FSM, Audio Resampling, Win32 Struct Sizes, Bootstrapper)
+    └── VoiceDictation.Tests/            # xUnit Test Paketi (FSM geçişleri, Audio Resampling, Win32 Boyutları)
 ```
 
 ---
 
-## Prerequisites
+## Sistem Gereksinimleri
 
-- **Development:** Windows 10/11 x64, .NET 10 SDK
-- **Runtime:** Windows 10/11 x64 (Standalone single-file package has zero dependencies)
+- **Geliştirici Ortamı:** Windows 10/11 x64, .NET 10 SDK
+- **Kullanıcı Ortamı:** Windows 10/11 x64 (Tek dosya standalone sürüm için ek hiçbir kuruluma gerek yoktur)
 
 ---
 
-## Getting Started
+## Kurulum ve Çalıştırma
 
-### 1. Build and Run from Source
+### 1. Kaynak Koddan Derleme ve Çalıştırma
 
 ```powershell
-# Clone repository
-git clone https://github.com/triplessbaba-systems/VoiceDictation.git
-cd VoiceDictation
+# Depoyu klonlayın
+git clone https://github.com/triplessbaba-systems/VoiceDictation--by-TripleSS-.git
+cd VoiceDictation--by-TripleSS-
 
-# Build solution
+# Çözümü derleyin
 dotnet build VoiceDictation.slnx
 
-# Run tests
+# Testleri çalıştırın (9/9 Birim Testi)
 dotnet test VoiceDictation.slnx
 
-# Launch application
+# Uygulamayı başlatın
 dotnet run --project src/VoiceDictation.App
 ```
 
-### 2. Publish Standalone Single-File Executable
+### 2. Tek Dosya (.EXE) Olarak Yayınlama (Standalone)
 
-To generate a standalone `.exe` that can be transferred and executed on any Windows 10/11 PC without .NET installed:
+Başka bilgisayarlara doğrudan atabileceğiniz, içine tüm çalışma zamanı ve yapay zeka motoru gömülü tek bir `.exe` üretmek için:
 
 ```powershell
 dotnet publish src/VoiceDictation.App/VoiceDictation.App.csproj `
@@ -85,13 +87,24 @@ dotnet publish src/VoiceDictation.App/VoiceDictation.App.csproj `
   -o ./publish-standalone
 ```
 
-The compiled binary will be located at `./publish-standalone/VoiceDictation.App.exe`.
+Üretilen çalıştırılabilir dosya `./publish-standalone/VoiceDictation.App.exe` konumunda hazır olacaktır (~174 MB).
 
 ---
 
-## Configuration
+## Kullanım Kılavuzu
 
-Settings are persisted in `%APPDATA%\VoiceDictation\settings.json`:
+1. **Başlatma:** Uygulamayı çalıştırdığınızda ekranın alt kısmında şeffaf bir kapsül belirecek ve sağ alttaki gizli simgelere mikrofon ikonu eklenecektir.
+2. **Dikte Etme:** 
+   - İstediğiniz herhangi bir metin alanına (örneğin Not Defteri veya Discord mesaj kutusu) tıklayın.
+   - Tanımlı kısayol tuşuna (**`Insert`** veya **`F8`**) basılı tutun ve konuşun.
+   - Tuşu bıraktığınızda sistem sesinizi yerel modelle çözümler ve imlecin bulunduğu yere anında yazar.
+3. **Ayarlar:** Sağ alttaki gizli simgelerde bulunan mikrofon ikonuna çift tıklayarak veya sağ tıklayıp **Ayarlar** seçeneğini kullanarak kısayol tuşunu, dili ve mikrofon aygıtını değiştirebilirsiniz.
+
+---
+
+## Yapılandırma Dosyası
+
+Tüm tercihler `%APPDATA%\VoiceDictation\settings.json` dosyasında saklanır:
 
 ```json
 {
@@ -107,6 +120,6 @@ Settings are persisted in `%APPDATA%\VoiceDictation\settings.json`:
 
 ---
 
-## License
+## Lisans
 
-MIT License
+Bu proje MIT Lisansı ile lisanslanmıştır.
